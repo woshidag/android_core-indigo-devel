@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ROS for Android</string>
+    <string name="use_master">连接</string>
+    <string name="cancel">取消</string>
+    <string name="qr_code">读取二维码</string>
+    <string name="master_uri_hint">http://localhost:11311/</string>
+    <string name="new_master">新建公有网址</string>
+    <string name="new_private_master">新建私有网址</string>
+    <string name="show_advanced">显示高级选项</string>
+    <string name="select_interface">选择网络接口</string>
+    <string name="uri_text">主网址:</string>
+
+</resources>
