@@ -37,6 +37,7 @@
         <com.github.rosjava.android_extras.gingerbread.view.BatteryLevelView
             android:id="@+id/laptop_battery"
             android:layout_width="30dp"
+
             android:layout_height="15dp" />
     </LinearLayout>
 </LinearLayout>

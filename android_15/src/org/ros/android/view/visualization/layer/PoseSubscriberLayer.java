@@ -16,6 +16,8 @@
 
 package org.ros.android.view.visualization.layer;
 
+import android.util.Log;
+
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.shape.GoalShape;
 import org.ros.android.view.visualization.shape.Shape;
@@ -37,6 +39,7 @@ public class PoseSubscriberLayer extends SubscriberLayer<geometry_msgs.PoseStamp
 
   private Shape shape;
   private boolean ready;
+  private geometry_msgs.PoseStamped poseStamped;
 
   public PoseSubscriberLayer(String topic) {
     this(GraphName.of(topic));
@@ -69,6 +72,10 @@ public class PoseSubscriberLayer extends SubscriberLayer<geometry_msgs.PoseStamp
           shape.setTransform(frameTransform.getTransform().multiply(poseTransform));
           ready = true;
         }
+
+        /** 2016.07.22 */
+        Log.e("myLog--", "poseStamped ===== " + pose.getPose().getPosition().getX());
+        poseStamped = pose;
       }
     });
   }
@@ -76,5 +83,13 @@ public class PoseSubscriberLayer extends SubscriberLayer<geometry_msgs.PoseStamp
   @Override
   public GraphName getFrame() {
     return targetFrame;
+
+  }
+
+  /** 2016.07.22 */
+  public geometry_msgs.PoseStamped getPoseStamped() {
+    return poseStamped;
   }
 }
+
+

@@ -13,5 +13,5 @@
         android:text="Children"
         android:textColor="#ffCCCC22"
         android:textSize="17dip"
-        android:textStyle="bold"></TextView>
+        android:textStyle="bold"/>
 </LinearLayout>

@@ -52,7 +52,6 @@ public abstract class Annotation extends TriangleFanShape {
         this.color = color;
     }
 
-
     public String getName() {
         return name;
     }

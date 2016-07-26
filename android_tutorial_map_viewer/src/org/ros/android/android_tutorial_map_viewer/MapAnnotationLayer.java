@@ -14,7 +14,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.rosjava.android_remocons.common_tools.apps.AppParameters;
@@ -66,7 +65,7 @@ public class MapAnnotationLayer extends DefaultLayer {
     private AppParameters params;
 
     public enum Mode {
-        ADD_MARKER, ADD_TABLE, ADD_COLUMN, ADD_WALL, ADD_LOCATION
+        ADD_MARKER, ADD_TABLE, ADD_COLUMN, ADD_WALL, ADD_LOCATION, ADD_NODEMAP
     }
 
     public MapAnnotationLayer(final Context context, final AnnotationsList annotationsList,
@@ -107,6 +106,9 @@ public class MapAnnotationLayer extends DefaultLayer {
         }
     }
 
+
+
+
     private double angle(double x1, double y1, double x2, double y2) {
         double deltaX = x1 - x2;
         double deltaY = y1 - y2;
@@ -115,6 +117,15 @@ public class MapAnnotationLayer extends DefaultLayer {
 
     private double dist(double x1, double y1, double x2, double y2) {
         return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    }
+
+    /** 2016.7.25 */
+    public double getDist(double xx1, double yy1, double xx2, double yy2) {
+        return dist(xx1, yy1, xx2, yy2);
+    }
+    /** 2016.7.25 */
+    public double getAngle(double x1, double y1, double x2, double y2) {
+        return angle(x1, y1, x2, y2);
     }
 
     @Override
@@ -196,6 +207,11 @@ public class MapAnnotationLayer extends DefaultLayer {
     @Override
     public void onShutdown(VisualizationView view, Node node) {}
 
+    /** 2016.7.22 */
+    public void getConfirmAnnotation() {
+        confirmAnnotation();
+    }
+
     private void confirmAnnotation() {
         LayoutInflater layoutInflater = LayoutInflater.from(context);
         View promptView = layoutInflater.inflate(R.layout.annotation_cfg, null);
@@ -205,13 +221,18 @@ public class MapAnnotationLayer extends DefaultLayer {
         final boolean annotationAccepted = false;
         final EditText name_edit    = (EditText) promptView.findViewById(R.id.name_edit);
         final EditText height_edit  = (EditText) promptView.findViewById(R.id.height_edit);
-        final TextView name_label   = (TextView) promptView.findViewById(R.id.name_label);
-        final TextView height_label = (TextView) promptView.findViewById(R.id.height_label);
+//        final TextView name_label   = (TextView) promptView.findViewById(R.id.name_label);
+//        final TextView height_label = (TextView) promptView.findViewById(R.id.height_label);
 
         // Customize for some slightly exotic annotations
-/** 自定义一些外在的标注 */
-        if (mode == Mode.ADD_MARKER)                // Marker name must be its id, a positive integer
+/** 自定义一些外在的标注 */         // Marker name must be its id, a positive integer
+        if (mode == Mode.ADD_MARKER)    {
             name_edit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        }
+        if (mode == Mode.ADD_NODEMAP)    {
+            name_edit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); //调用数字键盘
+        }
+
 
         // Setup a dialog windowAnnotation
         alertDialogBuilder.setCancelable(false);
@@ -227,10 +248,10 @@ public class MapAnnotationLayer extends DefaultLayer {
                             annotation.setName(name_edit.getText().toString());
                             annotationsList.addItem(annotation);
                         } catch (NumberFormatException e) {
-                            Toast.makeText(context, "高度必须是数字类型...", Toast.LENGTH_LONG).show();
+                            Toast.makeText(context, "高度必须是数字类型", Toast.LENGTH_LONG).show();
 //                            Toast.makeText(context, "Height must be a number; discarding...", Toast.LENGTH_LONG).show();
                         } catch (Exception e) {
-                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(context, "ee - - " + e.getMessage()+ " - - ee", Toast.LENGTH_LONG).show();
                         } finally {
                             annotation = null;
                         }
@@ -259,5 +280,8 @@ public class MapAnnotationLayer extends DefaultLayer {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
         });
+    }
+    public void addAnno(Annotation anno) {
+        annotationsList.addItem(anno);
     }
 }

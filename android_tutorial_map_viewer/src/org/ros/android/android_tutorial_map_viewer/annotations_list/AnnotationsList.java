@@ -21,7 +21,7 @@ import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.
 import java.util.ArrayList;
 
 
-/** 标注列表类  继承适配器类*/
+/** 标注列表类  继承适配器类 */
 public class AnnotationsList extends BaseExpandableListAdapter {
 
     @Override
@@ -74,6 +74,7 @@ public class AnnotationsList extends BaseExpandableListAdapter {
             children.get(index).add(annotation);
             notifyDataSetChanged();
             listView.expandGroup(index);
+
         }
     }
 
@@ -124,16 +125,19 @@ public class AnnotationsList extends BaseExpandableListAdapter {
     @Override
     public int getChildrenCount(int groupPosition) {
         return children.get(groupPosition).size();
+
     }
 
     @Override
     public Object getGroup(int groupPosition) {
         return groups.get(groupPosition);
+
     }
 
     @Override
     public int getGroupCount() {
         return groups.size();
+
     }
 
     @Override
@@ -142,7 +146,7 @@ public class AnnotationsList extends BaseExpandableListAdapter {
     }
 
     // Return a group view. You can load your custom layout here.
-    /** 加载GroupView */
+    /** 加载Group View */
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView,
                              ViewGroup parent) {

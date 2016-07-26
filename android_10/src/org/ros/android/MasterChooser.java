@@ -74,6 +74,7 @@ public class MasterChooser extends Activity {
    */
   private static final String PREFS_KEY_NAME = "URI_KEY";
 
+
   /**
    * Package name of the QR code reader used to scan QR codes.
    */
@@ -111,8 +112,10 @@ public class MasterChooser extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.master_chooser);
+
     uriText = (EditText) findViewById(R.id.master_chooser_uri);
     connectButton = (Button) findViewById(R.id.master_chooser_ok);
+
     uriText.addTextChangedListener(new TextWatcher() {
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -260,7 +263,7 @@ public class MasterChooser extends Activity {
     }
   }
 
-//  新建公有主机的事件处理
+
   public Intent createNewMasterIntent(boolean newMaster, boolean isPrivate) {
     Intent intent = new Intent();
     final String uri = uriText.getText().toString();
@@ -271,6 +274,7 @@ public class MasterChooser extends Activity {
     return intent;
   }
 
+  //  新建公有主机的事件处理
   public void newMasterButtonClicked(View unused) {
     setResult(RESULT_OK, createNewMasterIntent(true, false));
     finish();
@@ -289,7 +293,7 @@ public class MasterChooser extends Activity {
     finish();
   }
 
-//  返回到桌面
+/** 返回到桌面  2016.7.13 */
   public void backHome() {
     Intent home = new Intent(Intent.ACTION_MAIN);
     home.addCategory(Intent.CATEGORY_HOME);
@@ -304,6 +308,8 @@ public class MasterChooser extends Activity {
    * @return true if the desired activity is install on the device, false
    *         otherwise.
    */
+
+  /** 檢查二維碼掃描器是否安裝*/
   protected boolean isQRCodeReaderInstalled(Intent intent) {
     List<ResolveInfo> list =
         getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);

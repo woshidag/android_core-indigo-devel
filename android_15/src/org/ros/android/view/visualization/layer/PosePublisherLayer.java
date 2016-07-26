@@ -16,10 +16,11 @@
 
 package org.ros.android.view.visualization.layer;
 
-import com.google.common.base.Preconditions;
-
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+
+import com.google.common.base.Preconditions;
+
 import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.shape.PixelSpacePoseShape;
 import org.ros.android.view.visualization.shape.Shape;

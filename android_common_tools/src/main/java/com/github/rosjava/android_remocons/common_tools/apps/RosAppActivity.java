@@ -300,7 +300,8 @@ public abstract class RosAppActivity extends RosActivity {
                 new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected Void doInBackground(Void... params) {
-                        RosAppActivity.this.init(nodeMainExecutorService);
+						Log.e("RosAppActivity----", "nodeMainExecutorService === " + nodeMainExecutorService);
+						RosAppActivity.this.init(nodeMainExecutorService);
                         return null;
                     }
                 }.execute();

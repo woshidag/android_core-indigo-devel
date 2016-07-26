@@ -5,8 +5,8 @@ import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 
-public class Marker extends Annotation {
-    public static final String GROUP_NAME = "AR Markers";
+public class NodeMap extends Annotation {
+    public static final String GROUP_NAME = "Node map";
 
     private static final Color COLOR = Color.fromHexAndAlpha("0afaf0", 0.8f);
     private static final float VERTICES[] = {
@@ -16,9 +16,9 @@ public class Marker extends Annotation {
 
     };
 
-    private int id; // AR maker unique id
+    private int id; //  unique id
 
-    public Marker(String name) {
+    public NodeMap(String name) {
         super(name, VERTICES, COLOR);
         setGroup(GROUP_NAME);
     }
@@ -31,7 +31,7 @@ public class Marker extends Annotation {
         }
         catch (NumberFormatException e) {
             /** 标注名称必须是正整数，否则 runtime异常 */
-            throw new RuntimeException("Marker name must be a positive integer");
+            throw new RuntimeException("nodeMap name must be a positive integer");
         }
     }
 

@@ -38,6 +38,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +49,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.github.rosjava.android_remocons.common_tools.apps.RosAppActivity;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import org.ros.address.InetAddressFactory;
@@ -55,7 +57,6 @@ import org.ros.android.BitmapFromCompressedImage;
 import org.ros.android.MasterChooser;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.AnnotationsList;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.AnnotationsPublisher;
-import org.ros.android.android_tutorial_map_viewer.annotations_list.MockDataProvider;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Annotation;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Column;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Location;
@@ -65,23 +66,32 @@ import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.
 import org.ros.android.view.RosImageView;
 import org.ros.android.view.VirtualJoystickView;
 import org.ros.android.view.visualization.VisualizationView;
+import org.ros.android.view.visualization.XYOrthographicCamera;
 import org.ros.android.view.visualization.layer.CameraControlListener;
 import org.ros.android.view.visualization.layer.LaserScanLayer;
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.android.view.visualization.layer.OccupancyGridLayer;
-import org.ros.android.view.visualization.layer.RobotLayer;
+import org.ros.android.view.visualization.layer.PoseSubscriberLayer;
+import org.ros.android.view.visualization.shape.Shape;
+import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
+import org.ros.node.ConnectedNode;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
+import org.ros.node.topic.Subscriber;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 import org.ros.time.NtpTimeProvider;
 
 import java.util.concurrent.TimeUnit;
 
+import ar_track_alvar_msgs.AlvarMarkers;
+import geometry_msgs.Pose;
 import world_canvas_msgs.SaveMapResponse;
 
-/**
- * 新添  2016.07.14
- */
+
+
+
 
 /**
  * @author murase@jsk.imi.i.u-tokyo.ac.jp (Kazuto Murase)
@@ -99,9 +109,26 @@ public class MainActivity extends RosAppActivity {
   private AnnotationsList annotationsList;
   private MapAnnotationLayer annotationLayer;
 
-/**  2016.7.15 添加 */
-  private Annotation annotation;
-  private MockDataProvider mockDataProvider;
+  /**  2016.7.15  */
+   Annotation annotation;
+//  private MockDataProvider mockDataProvider;
+
+  XYOrthographicCamera camera;
+
+
+  String mapFrame;
+  Subscriber<AlvarMarkers> markersSub;
+  int marker_num = 0;
+
+  boolean initialized = false;
+  boolean markers_initialized = false;
+  boolean tables_initialized = false;
+  boolean columns_initialized = false;
+  boolean walls_initialized = false;
+
+
+  ConnectedNode connectedNode;
+//  VisualizationView view;
 
 
 
@@ -128,11 +155,15 @@ public class MainActivity extends RosAppActivity {
   //  private OccupancyGridLayer occupancyGridLayer = null;
 //  private LaserScanLayer laserScanLayer = null;
 //  private RobotLayer robotLayer = null;
-//去掉私有private修饰 改为public
+/** 去掉私有private修饰 改为public */
   public OccupancyGridLayer occupancyGridLayer = null;
   public LaserScanLayer laserScanLayer = null;
-  public RobotLayer robotLayer = null;
+  /** 2016.7.19*/
+  public PoseSubscriberLayer poseSubscriberLayer = null;
+//  public RobotLayer robotLayer = null;
 
+  Shape shape;
+  GraphName targetFrame;
 
 
   public MainActivity() {
@@ -152,6 +183,7 @@ public class MainActivity extends RosAppActivity {
     setDefaultMasterName(defaultRobotName);
     setDefaultAppName(defaultAppName);
     setDashboardResource(R.id.top_bar);
+    /** 显示main界面 */
     setMainWindowResource(R.layout.main);
 
     super.onCreate(savedInstanceState);
@@ -168,6 +200,11 @@ public class MainActivity extends RosAppActivity {
 
     mapView = (VisualizationView) findViewById(R.id.map_view);
     mapView.onCreate(Lists.<Layer>newArrayList());
+
+
+//    Log.e("oncreate---", "mapView === " + mapView);
+//    Log.e("oncreate---", "connectedNode === " + connectedNode); //connectedNode 为 null
+
 
     refreshButton.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -216,31 +253,13 @@ public class MainActivity extends RosAppActivity {
 //    });
 
 
-    /** 新添  2016.07.14 */
+    /**   2016.07.14 */
     // Configure the ExpandableListView and its adapter containing current annotations
     ExpandableListView listView = (ExpandableListView) findViewById(R.id.annotations_view);
 
-    //        listView.setOnChildClickListener(new ExpandableListView.OnChildClickListener()
-//        {
-//            @Override
-//            public boolean onChildClick(ExpandableListView arg0, View arg1, int arg2, int arg3, long arg4)
-//            {
-//                Toast.makeText(getBaseContext(), "Child clicked", Toast.LENGTH_LONG).show();
-//                return false;
-//            }
-//        });
-//
-//        listView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener()
-//        {
-//            @Override
-//            public boolean onGroupClick(ExpandableListView arg0, View arg1, int arg2, long arg3)
-//            {
-//                Toast.makeText(getBaseContext(), "Group clicked", Toast.LENGTH_LONG).show();
-//                return false;
-//            }
-//        });
 
-    /** 新添  2016.07.14 */
+
+    /**   2016.07.14 */
     annotationsList = new AnnotationsList(this, listView);
 
     // TODO use reflection to take all classes on annotations package except Annotation
@@ -263,53 +282,239 @@ public class MainActivity extends RosAppActivity {
     sideLayout = (ViewGroup) findViewById(R.id.side_layout);
 
 
+  }
 
 
+  @Override
+  protected void init(NodeMainExecutor nodeMainExecutor) {
+    super.init(nodeMainExecutor);
+    this.nodeMainExecutor = nodeMainExecutor;
+
+    nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory
+            .newNonLoopback().getHostAddress(), getMasterUri());
+
+    String joyTopic = remaps.get(getString(R.string.joystick_topic));
+    String camTopic = remaps.get(getString(R.string.camera_topic));
+
+    NameResolver appNameSpace = getMasterNameSpace();
+    joyTopic = appNameSpace.resolve(joyTopic).toString();
+    camTopic = appNameSpace.resolve(camTopic).toString();
+    cameraView.setTopicName(camTopic);
+    virtualJoystickView.setTopicName(joyTopic);
+
+    nodeMainExecutor.execute(cameraView,
+            nodeConfiguration.setNodeName("android/camera_view"));
+    nodeMainExecutor.execute(virtualJoystickView,
+            nodeConfiguration.setNodeName("android/virtual_joystick"));
+
+    viewControlLayer = new ViewControlLayer(this,
+            nodeMainExecutor.getScheduledExecutorService(), cameraView,
+            mapView, mainLayout, sideLayout, params);
+
+    String mapTopic   = remaps.get(getString(R.string.map_topic));
+    String scanTopic  = remaps.get(getString(R.string.scan_topic));
+    String robotFrame = (String) params.get("robot_frame", getString(R.string.robot_frame));
+/** 2016.7.19*/
+    String nodeTopic = remaps.get(getString(R.string.node_topic));
+//    String nodeTopic = (String) params.get("node_frame", getString(R.string.node_topic));
+
+//        Log.e("---mylog","nodeTopic === " + nodeTopic);
+    occupancyGridLayer = new OccupancyGridLayer(appNameSpace.resolve(mapTopic).toString());
+    laserScanLayer = new LaserScanLayer(appNameSpace.resolve(scanTopic).toString());
+/** 2016.7.19*/
+    poseSubscriberLayer = new PoseSubscriberLayer(appNameSpace.resolve(nodeTopic).toString());
+//    poseSubscriberLayer = new PoseSubscriberLayer(nodeTopic);
+//        Log.e("---mylog","poseSubscriberLayer === " + poseSubscriberLayer);
+
+//    robotLayer = new RobotLayer(robotFrame);
+
+    mapView.addLayer(viewControlLayer);
+//         mapView.addLayer(new OccupancyGridLayer(mapTopic));
+    mapView.addLayer(occupancyGridLayer);
+    mapView.addLayer(laserScanLayer);
+/** 2016.7.19*/
+//       mapView.addLayer(annotationLayer);
+//       mapView.addLayer(robotLayer);
+    mapView.addLayer(poseSubscriberLayer);
+
+//       mapView.addLayer(viewControlLayer);
+
+    annotationLayer = new MapAnnotationLayer(this, annotationsList, params);
+    mapView.addLayer(annotationLayer);
+//        mapView.addLayer(poseSubscriberLayer);
+
+//         Log.e("MainActivity----", "nodeMainExecutor === " + nodeMainExecutor);
+    mapView.init(nodeMainExecutor);
+
+    viewControlLayer.addListener(new CameraControlListener() {
+      @Override
+      public void onZoom(float focusX, float focusY, float factor) {}
+      @Override
+      public void onDoubleTap(float x, float y) {}
+      @Override
+      public void onTranslate(float distanceX, float distanceY) {}
+      @Override
+      public void onRotate(float focusX, float focusY, double deltaAngle) {}
+    });
+
+    mapView.addLayer(viewControlLayer);
+
+    // dwlee
+    //what is a main purpose of this function?
+    NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(
+            InetAddressFactory.newFromHostString("192.168.0.1"),
+            nodeMainExecutor.getScheduledExecutorService());
+    ntpTimeProvider.startPeriodicUpdates(1, TimeUnit.MINUTES);
+    nodeConfiguration.setTimeProvider(ntpTimeProvider);
+
+    nodeMainExecutor.execute(mapView, nodeConfiguration.setNodeName("android/map_view"));
+
+    annotationsPub.setMasterNameSpace(getMasterNameSpace());
+
+    /** 在线程内调用了主线程数据，数据可能还没有初始化，因此会报空指针异常 */
+//    nodeMainExecutor.execute(annotationsPub, nodeConfiguration.setNodeName("android/annotations_pub"));
 
   }
 
 
-//  Annotation(String name, float[] vertices, Color color)
+
+
+
 
   //  标注node点击事件处理
   public void node(View v) {
 
-
-//    annotationLayer.setMode(MapAnnotationLayer.Mode.ADD_MARKER);
-
-annotation = mockDataProvider.getRandomAnnotation("");
-
-//    annotationsList.addItem(annotation);
-annotationsList.addItem(new Location(""));
     nodeMap();
 
-    Toast.makeText(MainActivity.this, "地图已标注",Toast.LENGTH_SHORT).show();
-  }
-
-  private  void nodeMap() {
-
-//    ExpandableListView listView = (ExpandableListView) findViewById(R.id.annotations_view);
-//
-//    annotationsList = new AnnotationsList(this, listView);
-
-    // TODO use reflection to take all classes on annotations package except Annotation
-//    annotationsList.addGroup(new Marker(""));
-//    annotationsList.addGroup(new Location(""));
-//    annotationsList.addGroup(new Table(""));
-//    annotationsList.addGroup(new Column(""));
-//    annotationsList.addGroup(new Wall(""));
-
-//    annotationsPub = new AnnotationsPublisher(this, annotationsList, params, remaps);
-//    listView.setAdapter(annotationsList);
-
-    Toast.makeText(MainActivity.this, "nodeMap run", Toast.LENGTH_SHORT).show();
-
-//    Marker marker = new Marker("myMarker");
-//    annotationLayer = new MapAnnotationLayer(this, annotationsList, params);
-//    annotationLayer.setMode(MapAnnotationLayer.Mode.ADD_MARKER);
-//    annotationLayer.onTouchEvent(this, );
 
   }
+
+  private void nodeMap() {
+
+
+
+
+    /** 2016.07.22 */
+    geometry_msgs.PoseStamped poseStamped = poseSubscriberLayer.getPoseStamped();
+    Pose pose = poseStamped.getPose();
+
+//    Toast.makeText(MainActivity.this, pose.toString(), Toast.LENGTH_SHORT).show();
+
+    Log.e("myLog -- ", "pose ===" + pose); //pose ===MessageImpl<geometry_msgs/Pose>
+
+
+    double x = pose.getPosition().getX();
+    double y = pose.getPosition().getY();
+//    double z = pose.getPosition().getZ();
+
+//    double xx = poseStamped.getPose().getPosition().getX();
+//    double yy = poseStamped.getPose().getPosition().getY();
+
+    Log.e("myLog -- ", "x ===" + x); //x ===0.0
+    Log.e("myLog -- ", "y ===" + y); // y ===0.0
+
+
+    camera = mapView.getCamera();
+    camera.setFrame((String) params.get("node_topic", MainActivity.this.getString(R.string.node_topic)));
+
+//   Transform p = Transform.translation(camera.toCameraFrame((int) x, (int) y));
+
+    Transform p;
+    p = Transform.translation(camera.toCameraFrame((int)x, (int) y));
+//    annotation = new Marker("marker 1");
+    annotation = new Location("Location 1");
+//    annotation = new Location("");
+
+    if (annotation != null) {
+Toast.makeText(MainActivity.this, "annotation != null",Toast.LENGTH_SHORT).show();
+      Log.e("myLog --- ","annotation =-- = = = " + annotation);
+      Log.e("myLog --- ","p =-- = = = " + p);
+
+      Preconditions.checkNotNull(p);
+
+      Vector3 poseVector;
+      Vector3 pointerVector;
+
+      poseVector = p.apply(Vector3.zero());
+      pointerVector = camera.toCameraFrame((int) x, (int) y);
+
+
+
+      /**  */
+      double dist  = annotationLayer.getDist(pointerVector.getX(), pointerVector.getY(),
+              poseVector.getX(), poseVector.getY());
+
+      double angle = annotationLayer.getAngle(pointerVector.getX(), pointerVector.getY(),
+              poseVector.getX(), poseVector.getY());
+
+//      p = Transform.translation(poseVector).multiply(Transform.zRotation(angle));
+
+      p = Transform.translation(poseVector).multiply(Transform.zRotation(angle));
+
+
+      Log.e("myLog --- ","annotation = =11 = = " + annotation);
+      Log.e("myLog --- ","p = =11 = = " + p);
+
+      annotation.setTransform(p);
+      annotation.setSizeXY((float) dist);
+
+
+    }
+
+
+    annotationLayer.addAnno(annotation);
+
+
+
+
+
+
+
+    /** = =  = =  = =  = =  = =  = =  = =  = =
+
+
+
+     MapAnnotationLayer mapAnnotationLayer = new MapAnnotationLayer(MainActivity.this, annotationsList, params);
+
+     mapAnnotationLayer.getConfirmAnnotation();
+
+
+     MessageDefinitionReflectionProvider messageDefinitionProvider = new MessageDefinitionReflectionProvider();
+     DefaultMessageFactory messageFactory = new DefaultMessageFactory(messageDefinitionProvider);
+
+     AlvarMarkers  markersMsg = messageFactory.newFromType(AlvarMarkers._TYPE); //记号列表
+
+     Transform makeVertical   = new Transform(new Vector3(0.0, 0.0, 0.0), new Quaternion(0.5, 0.5, 0.5, 0.5));
+
+     //    ann = annotationsList.listFullContent().get(1);
+
+     for (Annotation ann : annotationsList.listFullContent()) {
+
+     AlvarMarker annMsg = messageFactory.newFromType(AlvarMarker._TYPE);
+     annMsg.setId(((Marker) ann).getId());
+     annMsg.getPose().getHeader().setFrameId(mapFrame);
+     Transform tf = ann.getTransform().multiply(makeVertical);
+     //    tf.toPoseMessage(annMsg.getPose().getPose());
+     tf.toPoseMessage(pose);
+     markersMsg.getMarkers().add(annMsg);
+
+     }
+
+     */
+
+
+/** = = = = = = = = = = = =  */
+
+
+
+
+
+  }
+
+
+
+
+
 
   //  返回操作，返回到上一页org.ros.android.MasterChooser
   public void myBack() {
@@ -324,7 +529,7 @@ annotationsList.addItem(new Location(""));
     Button button;
 
     switch (id) {
-      case NAME_MAP_DIALOG_ID:
+      case NAME_MAP_DIALOG_ID: /** 確定保存地圖的ID */
         dialog = new Dialog(this);
         dialog.setContentView(R.layout.name_map_dialog);
         dialog.setTitle("保存地图");
@@ -369,7 +574,7 @@ annotationsList.addItem(new Location(""));
                   public void onFailureCallback(Exception e) {
                     safeDismissWaitingDialog();
 //                    safeShowNotiDialog("错误","onFailureCallback(Exception e)- -" + e.getMessage());
-                    safeShowNotiDialog("错误","没有找到服务，回调出现失败");
+                    safeShowNotiDialog("错误","没有找到服务，回调失败" + e.getMessage());
                   }
                 });
 
@@ -378,7 +583,7 @@ annotationsList.addItem(new Location(""));
 
               } catch (Exception e) {
                 e.printStackTrace();
-                safeShowNotiDialog("Error", "保存出现错误!");
+                safeShowNotiDialog("Error", "保存出现错误!" + e.getMessage());
 //                safeShowNotiDialog("Error", "保存出现错误: " + e.toString());
               }
 
@@ -391,7 +596,7 @@ annotationsList.addItem(new Location(""));
         });
 
 
-//确定按钮点击事件
+/** 确定保存地圖按钮点击事件 */
         button = (Button) dialog.findViewById(R.id.certain_button);
         button.setOnClickListener(new View.OnClickListener() {
           @Override
@@ -400,17 +605,20 @@ annotationsList.addItem(new Location(""));
             MapManager mapManager = new MapManager(MainActivity.this, remaps);
             String name           = nameField.getText().toString();
 
-            mapManager.saveMap();
+//            mapManager.saveMap();
 
 //            editText.length()是否为零来判断;
             if (nameField.length() != 0) {
               mapManager.setMapName(name);
-//              mapManager.onStart();
+
+              saveMyMap();
+
+
               mapManager.saveMap();
               System.out.println("------------------------------name != null-------------");
               Toast.makeText(MainActivity.this, "地图保存成功!", Toast.LENGTH_SHORT).show();
-              removeDialog(NAME_MAP_DIALOG_ID);
-//              dialog.dismiss();//取消对话框
+              removeDialog(NAME_MAP_DIALOG_ID);//移除對話框和其內容
+//              dialog.dismiss();//取消对话框，但內容下次彈出對話框時還在
             }
             else {
               Toast.makeText(MainActivity.this, "请输入地图名称", Toast.LENGTH_LONG).show();
@@ -421,6 +629,7 @@ annotationsList.addItem(new Location(""));
 
           }
         });
+
 
 //        取消按钮点击事件
         button = (Button) dialog.findViewById(R.id.cancel_button);
@@ -435,6 +644,45 @@ annotationsList.addItem(new Location(""));
         dialog = null;
     }
     return dialog;
+  }
+
+
+  /** 2016.07.16 添加 */
+  public void saveMyMap() {
+    try {
+      final MapManager mapManager = new MapManager(MainActivity.this, remaps);
+
+
+      mapManager.setNameResolver(getMasterNameSpace());
+      mapManager.registerCallback(new MapManager.StatusCallback() {
+        @Override
+        public void timeoutCallback() {
+          safeDismissWaitingDialog();
+          safeShowNotiDialog("Error", "超时");
+        }
+        @Override
+        public void onSuccessCallback(SaveMapResponse arg0) {
+          safeDismissWaitingDialog();
+          safeShowNotiDialog("Success", "地图保存成功!!!!");
+        }
+        @Override
+        public void onFailureCallback(Exception e) {
+          safeDismissWaitingDialog();
+          safeShowNotiDialog("Error","onFailureCallback(Exception e)- -" + e.getMessage());
+//          safeShowNotiDialog("错误","没有找到服务，回调失败");
+        }
+      });
+
+      nodeMainExecutor.execute(mapManager,
+              nodeConfiguration.setNodeName("android/save_map"));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+//      safeShowNotiDialog("Error", "保存出现错误!");
+      safeShowNotiDialog("Error", "保存出现错误: " + e.toString());
+    }
+
+    removeDialog(NAME_MAP_DIALOG_ID);
   }
 
 
@@ -492,112 +740,5 @@ annotationsList.addItem(new Location(""));
       }
     });
   }
-
-  @Override
-  protected void init(NodeMainExecutor nodeMainExecutor) {
-
-    super.init(nodeMainExecutor);
-    this.nodeMainExecutor = nodeMainExecutor;
-
-    nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory
-            .newNonLoopback().getHostAddress(), getMasterUri());
-
-    String joyTopic = remaps.get(getString(R.string.joystick_topic));
-    String camTopic = remaps.get(getString(R.string.camera_topic));
-
-    NameResolver appNameSpace = getMasterNameSpace();
-    joyTopic = appNameSpace.resolve(joyTopic).toString();
-    camTopic = appNameSpace.resolve(camTopic).toString();
-    cameraView.setTopicName(camTopic);
-    virtualJoystickView.setTopicName(joyTopic);
-
-    nodeMainExecutor.execute(cameraView,
-            nodeConfiguration.setNodeName("android/camera_view"));
-    nodeMainExecutor.execute(virtualJoystickView,
-            nodeConfiguration.setNodeName("android/virtual_joystick"));
-
-    viewControlLayer = new ViewControlLayer(this,
-            nodeMainExecutor.getScheduledExecutorService(), cameraView,
-            mapView, mainLayout, sideLayout, params);
-
-    String mapTopic   = remaps.get(getString(R.string.map_topic));
-    String scanTopic  = remaps.get(getString(R.string.scan_topic));
-    String robotFrame = (String) params.get("robot_frame", getString(R.string.robot_frame));
-
-    occupancyGridLayer = new OccupancyGridLayer(appNameSpace.resolve(mapTopic).toString());
-    laserScanLayer = new LaserScanLayer(appNameSpace.resolve(scanTopic).toString());
-    robotLayer = new RobotLayer(robotFrame);
-
-    mapView.addLayer(viewControlLayer);
-//    mapView.addLayer(new OccupancyGridLayer(mapTopic));
-    mapView.addLayer(occupancyGridLayer);
-    mapView.addLayer(laserScanLayer);
-    mapView.addLayer(robotLayer);
-
-    annotationLayer = new MapAnnotationLayer(this, annotationsList, params);
-    mapView.addLayer(annotationLayer);
-
-    mapView.init(nodeMainExecutor);
-    viewControlLayer.addListener(new CameraControlListener() {
-      @Override
-      public void onZoom(float focusX, float focusY, float factor) {}
-      @Override
-      public void onDoubleTap(float x, float y) {}
-      @Override
-      public void onTranslate(float distanceX, float distanceY) {}
-      @Override
-      public void onRotate(float focusX, float focusY, double deltaAngle) {}
-    });
-
-    mapView.addLayer(viewControlLayer);
-
-
-    // dwlee
-    //what is a main purpose of this function?
-    NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(
-            InetAddressFactory.newFromHostString("192.168.0.1"),
-            nodeMainExecutor.getScheduledExecutorService());
-    ntpTimeProvider.startPeriodicUpdates(1, TimeUnit.MINUTES);
-    nodeConfiguration.setTimeProvider(ntpTimeProvider);
-
-    nodeMainExecutor.execute(mapView, nodeConfiguration.setNodeName("android/map_view"));
-
-    annotationsPub.setMasterNameSpace(getMasterNameSpace());
-
- /** 在线程内调用了主线程数据，数据可能还没有初始化，因此会报空指针异常 */
-//    nodeMainExecutor.execute(annotationsPub, nodeConfiguration.setNodeName("android/annotations_pub"));
-
-
-
-
-
-//    mapView.addLayer(viewControlLayer);
-//    mapView.addLayer(annotationLayer);
-
-//    String mapTopic = remaps.get(getString(R.string.map_topic));
-//    mapView.addLayer(new OccupancyGridLayer(mapTopic));
-//    annotationLayer = new MapAnnotationLayer(this, annotationsList, params);
-
-//    NtpTimeProvider ntpTimeProvider = new NtpTimeProvider(
-//            InetAddressFactory.newFromHostString("192.168.10.1"), // TODO what is this?
-//            nodeMainExecutor.getScheduledExecutorService());
-//    ntpTimeProvider.startPeriodicUpdates(1, TimeUnit.MINUTES);
-//    nodeConfiguration.setTimeProvider(ntpTimeProvider);
-//    nodeMainExecutor.execute(mapView, nodeConfiguration.setNodeName("android/map_view"));
-//
-//    annotationsPub.setMasterNameSpace(getMasterNameSpace());
-//
-//    nodeMainExecutor.execute(annotationsPub, nodeConfiguration.setNodeName("android/annotations_pub"));
-  }
-
-
-
-
-
-/**  =================================================================================================== */
-
-
-
-
 
 }

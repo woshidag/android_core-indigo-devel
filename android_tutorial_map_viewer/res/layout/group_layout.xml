@@ -15,6 +15,6 @@
 		android:paddingRight="5dip"
 		android:textColor="#ffffffff"
 		android:textStyle="bold"
-		android:textSize="17dip"></TextView>
+		android:textSize="17dip"/>
 
 </LinearLayout>

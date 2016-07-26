@@ -16,9 +16,8 @@
 
 package org.ros.android.view.visualization.layer;
 
-import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.Color;
-import geometry_msgs.PoseStamped;
+import org.ros.android.view.visualization.VisualizationView;
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -28,6 +27,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
+
+import geometry_msgs.PoseStamped;
 
 /**
  * Renders a nav_msgs/Path as a dotted line.
@@ -83,21 +84,21 @@ public class PathLayer extends SubscriberLayer<nav_msgs.Path> implements TfLayer
     goalVertexByteBuffer.order(ByteOrder.nativeOrder());
     vertexBuffer = goalVertexByteBuffer.asFloatBuffer();
     if (path.getPoses().size() > 0) {
-      frame = GraphName.of(path.getPoses().get(0).getHeader().getFrameId());
-      // Path poses are densely packed and will make the path look like a solid
-      // line even if it is drawn as points. Skipping poses provides the visual
-      // point separation were looking for.
-      int i = 0;
-      for (PoseStamped pose : path.getPoses()) {
-        // TODO(damonkohler): Choose the separation between points as a pixel
-        // value. This will require inspecting the zoom level from the camera.
-        if (i % 15 == 0) {
-          vertexBuffer.put((float) pose.getPose().getPosition().getX());
-          vertexBuffer.put((float) pose.getPose().getPosition().getY());
-          vertexBuffer.put((float) pose.getPose().getPosition().getZ());
+        frame = GraphName.of(path.getPoses().get(0).getHeader().getFrameId());
+        // Path poses are densely packed and will make the path look like a solid
+        // line even if it is drawn as points. Skipping poses provides the visual
+        // point separation were looking for.
+        int i = 0;
+        for (PoseStamped pose : path.getPoses()) {
+          // TODO(damonkohler): Choose the separation between points as a pixel
+          // value. This will require inspecting the zoom level from the camera.
+          if (i % 15 == 0) {
+            vertexBuffer.put((float) pose.getPose().getPosition().getX());
+            vertexBuffer.put((float) pose.getPose().getPosition().getY());
+            vertexBuffer.put((float) pose.getPose().getPosition().getZ());
+          }
+          i++;
         }
-        i++;
-      }
     }
     vertexBuffer.position(0);
   }

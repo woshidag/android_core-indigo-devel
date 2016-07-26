@@ -107,16 +107,14 @@ public class MapManager extends AbstractNodeMain {
 
 /**  保存地图    */
     public void saveMap(){
-        Log.e("myLog---", "saveMap调用。。。");
-        System.out.println("-----------myLog--------------");
 
         ServiceClient<SaveMapRequest, SaveMapResponse> saveMapClient = null;
         if (connectedNode != null) {
             Log.e("myLog---", "connectedNode != null。。。");
+            Log.e("myLog---", "connectedNode === " + connectedNode.toString());
             System.out.println("-----------myLog---connectedNode != null--------------");
             try{
                 if (nameResolverSet){
-                    System.out.println("-----------myLog---nameResolverSet--------------");
                     saveSrvName = nameResolver.resolve(saveSrvName).toString();
                 }
                 saveMapClient = connectedNode.newServiceClient(saveSrvName,	SaveMap._TYPE);
@@ -134,7 +132,6 @@ public class MapManager extends AbstractNodeMain {
                     @Override
                     public void onSuccess(SaveMapResponse saveMapResponse) {
                         Log.e("myLog---", "成功调用。。。");
-                        System.out.println("-----------myLog---成功调用--------------");
                         if (waitingFlag){
                             clearWaitFor();
                             statusCallback.onSuccessCallback(saveMapResponse);
@@ -143,7 +140,6 @@ public class MapManager extends AbstractNodeMain {
                     @Override
                     public void onFailure(RemoteException e) {
                         Log.e("myLog---", "失败调用。。。");
-                        System.out.println("-----------myLog---失败调用--------------");
                         if (waitingFlag) {
                             clearWaitFor();
                             statusCallback.onFailureCallback(e);
@@ -152,12 +148,10 @@ public class MapManager extends AbstractNodeMain {
                 });
                 if(!waitFor(10)){
                     Log.e("myLog---", "调用超时。。。");
-                    System.out.println("-----------myLog----调用超时--------------");
                     statusCallback.timeoutCallback();
                 }
             }
         }
-        System.out.println("-----------myLog----connectedNode == null--------------");
     }
 
 

@@ -31,6 +31,7 @@ import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Column;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Location;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Marker;
+import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.NodeMap;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Table;
 import org.ros.android.android_tutorial_map_viewer.annotations_list.annotations.Wall;
 import org.ros.exception.RemoteException;
@@ -94,6 +95,7 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
     private Subscriber<yocs_msgs.ColumnList> columnsSub;
     private Subscriber<yocs_msgs.WallList> wallsSub;
 
+
     private ServiceClient<SaveARMarkersRequest, SaveARMarkersResponse> save_ar_markers_srvClient;
     private ServiceClient<SaveColumnsRequest, SaveColumnsResponse> save_columns_srvClient;
     private ServiceClient<SaveTablesRequest, SaveTablesResponse> save_tables_srvClient;
@@ -114,6 +116,7 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
     private boolean tables_initialized = false;
     private boolean columns_initialized = false;
     private boolean walls_initialized = false;
+    private boolean nodeMap_initialized = false;
 
     private Context context;
     private NameResolver masterNameSpace;
@@ -141,14 +144,17 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
         }
 
         if (annotationsList.getGroupCount() < 5) {
-            return;  // Still initializing the list  // TODO replace with a timer; only publish after 1/3 sec w/o changes
+           // Still initializing the list  // TODO replace with a timer; only publish after 1/3 sec w/o changes
+            return;
         }
 
-        if (! markers_initialized || !tables_initialized || !columns_initialized || !walls_initialized){
+        if (! markers_initialized || !tables_initialized || !columns_initialized
+                || !walls_initialized || !nodeMap_initialized){
             Log.i("MapAnn", "markers_initialized: "+markers_initialized);
             Log.i("MapAnn", "tables_initialized: "+tables_initialized);
             Log.i("MapAnn", "columns_initialized: "+columns_initialized);
             Log.i("MapAnn", "walls_initialized: "+walls_initialized);
+            Log.i("MapAnn", "nodeMap_initialized: "+nodeMap_initialized);
 
             Log.i("MapAnn", "标注列表正在初始化");
             return;
@@ -162,10 +168,11 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
         yocs_msgs.WallList      wallsMsg  = messageFactory.newFromType(WallList._TYPE);     //墙列表
 
 
+
 /** 转换器 */
         Transform makeVertical = new Transform(new Vector3(0.0, 0.0, 0.0), new Quaternion(0.5, 0.5, 0.5, 0.5));
 
-        for (Annotation ann: annotationsList.listFullContent()) {
+        for (Annotation ann : annotationsList.listFullContent()) {
 
             /** 添加标记列表信息 */
             if (ann.getGroup().equals(Marker.GROUP_NAME)) {
@@ -175,6 +182,16 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
                 Transform tf = ann.getTransform().multiply(makeVertical);
                 tf.toPoseMessage(annMsg.getPose().getPose());
                 markersMsg.getMarkers().add(annMsg);
+            }
+            else if (ann.getGroup().equals(NodeMap.GROUP_NAME)) {
+                AlvarMarker annMsg = messageFactory.newFromType(AlvarMarker._TYPE);
+                annMsg.setId(((NodeMap) ann).getId());
+                annMsg.getPose().getHeader().setFrameId(mapFrame);
+                Transform tf = ann.getTransform().multiply(makeVertical);
+                tf.toPoseMessage(annMsg.getPose().getPose());
+                markersMsg.getMarkers().add(annMsg);
+
+
             }
             /**  添加柱子列表信息 */
             else if (ann.getGroup().equals(Column.GROUP_NAME)) {
@@ -519,10 +536,10 @@ public class AnnotationsPublisher extends DataSetObserver implements NodeMain {
     @Override
     public void onShutdown(Node node) {
 
-        // markersPub.shutdown();
-        //tablesPub.shutdown();
-        //columnsPub.shutdown();
-        //wallsPub.shutdown();
+//         markersPub.shutdown();
+//        tablesPub.shutdown();
+//        columnsPub.shutdown();
+//        wallsPub.shutdown();
 
         initialized = false;
         Log.i("MapAnn", "Annotations publisher shutdown");

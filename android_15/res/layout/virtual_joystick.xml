@@ -27,7 +27,7 @@
         android:layout_height="fill_parent"
         android:layout_centerInParent="true"
         android:antialias="true"
-        android:src="@drawable/intensity"></ImageView>
+        android:src="@drawable/intensity"/>
 
     <!-- Magnitude text display -->
     <TextView
@@ -45,7 +45,7 @@
         android:layout_height="fill_parent"
         android:layout_centerInParent="true"
         android:antialias="true"
-        android:src="@drawable/large_d_widget_3"></ImageView>
+        android:src="@drawable/large_d_widget_3"/>
 
     <!-- 15 degree marker -->
     <ImageView
@@ -282,7 +282,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_centerInParent="true"
-        android:src="@drawable/top_angle_slice"></ImageView>
+        android:src="@drawable/top_angle_slice"/>
 
     <ImageView
         android:id="@+id/mid_angle_slice"
@@ -290,7 +290,7 @@
         android:layout_height="fill_parent"
         android:layout_centerInParent="true"
         android:alpha="0.5"
-        android:src="@drawable/mid_angle_slice"></ImageView>
+        android:src="@drawable/mid_angle_slice"/>
 
 
     <!-- Previous velocity divet -->
@@ -309,9 +309,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:src="@drawable/center_widget"></ImageView>
+        android:src="@drawable/center_widget"/>
 
-    <!-- Thumb divet -->
+    <!-- Thumb divet 箭頭-->
     <ImageView
         android:id="@+id/thumb_divet"
         android:layout_width="wrap_content"

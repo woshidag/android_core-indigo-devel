@@ -1,7 +1,6 @@
 package org.ros.android.android_tutorial_map_viewer;
 
 
-import java.util.concurrent.ExecutorService;
 import android.content.Context;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -19,6 +18,8 @@ import org.ros.android.view.visualization.layer.CameraControlListener;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.node.ConnectedNode;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author murase@jsk.imi.i.u-tokyo.ac.jp (Kazuto Murase)
@@ -41,7 +42,7 @@ public class ViewControlLayer extends CameraControlLayer {
 
     private enum ViewMode {
         CAMERA, MAP
-    };
+    }
     private ViewMode viewMode;
     private String robotFrame;
 
@@ -56,10 +57,10 @@ public class ViewControlLayer extends CameraControlLayer {
 
         this.context = context;
 
-        listeners = new ListenerGroup<CameraControlListener>(executorService);
+        listeners    = new ListenerGroup<CameraControlListener>(executorService);
 
         this.cameraView = cameraView;
-        this.mapView = mapView;
+        this.mapView    = mapView;
         this.mainLayout = mainLayout;
         this.sideLayout = sideLayout;
 

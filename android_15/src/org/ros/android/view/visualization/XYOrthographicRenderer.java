@@ -17,6 +17,7 @@
 package org.ros.android.view.visualization;
 
 import android.opengl.GLSurfaceView;
+
 import org.ros.android.view.visualization.layer.Layer;
 import org.ros.android.view.visualization.layer.TfLayer;
 import org.ros.namespace.GraphName;

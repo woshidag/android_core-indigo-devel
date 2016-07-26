@@ -170,7 +170,7 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
   /**
    * normalizingMultiplier Used to convert any distance from pixels to a
    * normalized value between 0 and 1. 0 is the center of widget and 1 is the
-   * normalized distance to the {@link #outerRing} from the center of the
+   * normalized distance to the {@link #} from the center of the
    * widget.
    */
   private float normalizingMultiplier;
@@ -538,6 +538,7 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
   /**
    * Sets up the visual elements of the virtual joystick.
    */
+  /**  初始化控制盤部件 */
   private void initVirtualJoystick(Context context) {
     // All the virtual joystick elements must be centered on the parent.
     setGravity(Gravity.CENTER);
@@ -546,9 +547,9 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
     mainLayout = (RelativeLayout) findViewById(R.id.virtual_joystick_layout);
     magnitudeText = (TextView) findViewById(R.id.magnitude);
     intensity = (ImageView) findViewById(R.id.intensity);
-    thumbDivet = (ImageView) findViewById(R.id.thumb_divet);
+    thumbDivet = (ImageView) findViewById(R.id.thumb_divet);  /**  方向箭頭圖片  */
     orientationWidget = new ImageView[24];
-    orientationWidget[0] = (ImageView) findViewById(R.id.widget_0_degrees);
+    orientationWidget[0] = (ImageView) findViewById(R.id.widget_0_degrees);/** 0度時針圖片 */
     orientationWidget[1] = (ImageView) findViewById(R.id.widget_15_degrees);
     orientationWidget[2] = (ImageView) findViewById(R.id.widget_30_degrees);
     orientationWidget[3] = (ImageView) findViewById(R.id.widget_45_degrees);
@@ -626,6 +627,8 @@ public class VirtualJoystickView extends RelativeLayout implements AnimationList
    * @param y
    *          The y coordinates of the contact relative to the parent container.
    */
+
+  /** 連接移動 */
   private void onContactMove(float x, float y) {
     // Get the coordinates of the contact relative to the center of the main
     // layout.

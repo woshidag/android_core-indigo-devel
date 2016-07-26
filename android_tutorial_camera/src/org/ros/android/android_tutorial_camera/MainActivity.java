@@ -18,16 +18,17 @@ package org.ros.android.android_tutorial_camera;
 
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
-import org.ros.address.InetAddressFactory;
+
 import org.ros.android.RosActivity;
 import org.ros.android.view.camera.RosCameraPreviewView;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
-import android.util.Log;
+
 import java.io.IOException;
 
 /**
@@ -62,8 +63,10 @@ public class MainActivity extends RosActivity {
         rosCameraPreviewView.releaseCamera();
         rosCameraPreviewView.setCamera(Camera.open(cameraId));
         toast = Toast.makeText(this, "Switching cameras.", Toast.LENGTH_SHORT);
+//        toast.show();
       } else {
         toast = Toast.makeText(this, "No alternative cameras to switch to.", Toast.LENGTH_SHORT);
+//        toast.show();
       }
       runOnUiThread(new Runnable() {
         @Override
