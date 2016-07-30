@@ -30,14 +30,18 @@ import org.ros.android.view.visualization.VisualizationView;
 import org.ros.android.view.visualization.XYOrthographicCamera;
 import org.ros.android.view.visualization.layer.DefaultLayer;
 import org.ros.android.view.visualization.shape.GoalShape;
+import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
+import org.ros.rosjava_geometry.FrameTransform;
 import org.ros.rosjava_geometry.Transform;
 import org.ros.rosjava_geometry.Vector3;
 
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
+
+import geometry_msgs.Pose;
 
 //import org.ros.android.view.visualization.shape.PoseShape;
 
@@ -64,6 +68,9 @@ public class MapAnnotationLayer extends DefaultLayer {
     private double distance = 1.0;
     private AppParameters params;
 
+    private boolean choosesss = true;
+    private final GraphName targetFrame;
+
     public enum Mode {
         ADD_MARKER, ADD_TABLE, ADD_COLUMN, ADD_WALL, ADD_LOCATION, ADD_NODEMAP
     }
@@ -73,6 +80,7 @@ public class MapAnnotationLayer extends DefaultLayer {
         this.context = context;
         this.annotationsList = annotationsList;
         this.params = params;
+        targetFrame = GraphName.of("map");
     }
 
 
@@ -283,5 +291,19 @@ public class MapAnnotationLayer extends DefaultLayer {
     }
     public void addAnno(Annotation anno) {
         annotationsList.addItem(anno);
+    }
+    public void addAnno(geometry_msgs.PoseStamped pose) {
+        if (choosesss) {
+            annotation = new Marker("marker 1");
+            choosesss = false;
+        } else {
+            annotation = new Table("Table 1");
+            choosesss = true;
+        }
+
+        Transform poseTransform = Transform.fromPoseMessage(pose.getPose());
+        annotation.setTransform(camera.getCameraToRosTransform().multiply(poseTransform));
+        confirmAnnotation();
+
     }
 }

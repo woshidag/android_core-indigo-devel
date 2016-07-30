@@ -396,75 +396,77 @@ public class MainActivity extends RosAppActivity {
 
     /** 2016.07.22 */
     geometry_msgs.PoseStamped poseStamped = poseSubscriberLayer.getPoseStamped();
-    Pose pose = poseStamped.getPose();
-
+    //Pose pose = poseStamped.getPose();
+    annotationLayer.addAnno(poseStamped);
+    mapView.getCamera().jumpToFrame((String) params.get("map_frame", getString(R.string.map_frame)));
+//    return;
 //    Toast.makeText(MainActivity.this, pose.toString(), Toast.LENGTH_SHORT).show();
-
-    Log.e("myLog -- ", "pose ===" + pose); //pose ===MessageImpl<geometry_msgs/Pose>
-
-
-    double x = pose.getPosition().getX();
-    double y = pose.getPosition().getY();
-//    double z = pose.getPosition().getZ();
-
-//    double xx = poseStamped.getPose().getPosition().getX();
-//    double yy = poseStamped.getPose().getPosition().getY();
-
-    Log.e("myLog -- ", "x ===" + x); //x ===0.0
-    Log.e("myLog -- ", "y ===" + y); // y ===0.0
-
-
-    camera = mapView.getCamera();
-    camera.setFrame((String) params.get("node_topic", MainActivity.this.getString(R.string.node_topic)));
-
-//   Transform p = Transform.translation(camera.toCameraFrame((int) x, (int) y));
-
-    Transform p;
-    p = Transform.translation(camera.toCameraFrame((int)x, (int) y));
-//    annotation = new Marker("marker 1");
-    annotation = new Location("Location 1");
-//    annotation = new Location("");
-
-    if (annotation != null) {
-Toast.makeText(MainActivity.this, "annotation != null",Toast.LENGTH_SHORT).show();
-      Log.e("myLog --- ","annotation =-- = = = " + annotation);
-      Log.e("myLog --- ","p =-- = = = " + p);
-
-      Preconditions.checkNotNull(p);
-
-      Vector3 poseVector;
-      Vector3 pointerVector;
-
-      poseVector = p.apply(Vector3.zero());
-      pointerVector = camera.toCameraFrame((int) x, (int) y);
-
-
-
-      /**  */
-      double dist  = annotationLayer.getDist(pointerVector.getX(), pointerVector.getY(),
-              poseVector.getX(), poseVector.getY());
-
-      double angle = annotationLayer.getAngle(pointerVector.getX(), pointerVector.getY(),
-              poseVector.getX(), poseVector.getY());
-
+//
+//    Log.e("myLog -- ", "pose ===" + pose); //pose ===MessageImpl<geometry_msgs/Pose>
+//
+//
+//    double x = pose.getPosition().getX();
+//    double y = pose.getPosition().getY();
+////    double z = pose.getPosition().getZ();
+//
+////    double xx = poseStamped.getPose().getPosition().getX();
+////    double yy = poseStamped.getPose().getPosition().getY();
+//
+//    Log.e("myLog -- ", "x ===" + x); //x ===0.0
+//    Log.e("myLog -- ", "y ===" + y); // y ===0.0
+//
+//
+//    camera = mapView.getCamera();
+//    camera.setFrame((String) params.get("node_topic", MainActivity.this.getString(R.string.node_topic)));
+//
+////   Transform p = Transform.translation(camera.toCameraFrame((int) x, (int) y));
+//
+//    Transform p;
+//    p = Transform.translation(camera.toCameraFrame((int)x, (int) y));
+////    annotation = new Marker("marker 1");
+//    annotation = new Location("Location 1");
+////    annotation = new Location("");
+//
+//    if (annotation != null) {
+//Toast.makeText(MainActivity.this, "annotation != null",Toast.LENGTH_SHORT).show();
+//      Log.e("myLog --- ","annotation =-- = = = " + annotation);
+//      Log.e("myLog --- ","p =-- = = = " + p);
+//
+//      Preconditions.checkNotNull(p);
+//
+//      Vector3 poseVector;
+//      Vector3 pointerVector;
+//
+//      poseVector = p.apply(Vector3.zero());
+//      pointerVector = camera.toCameraFrame((int) x, (int) y);
+//
+//
+//
+//      /**  */
+//      double dist  = annotationLayer.getDist(pointerVector.getX(), pointerVector.getY(),
+//              poseVector.getX(), poseVector.getY());
+//
+//      double angle = annotationLayer.getAngle(pointerVector.getX(), pointerVector.getY(),
+//              poseVector.getX(), poseVector.getY());
+//
+////      p = Transform.translation(poseVector).multiply(Transform.zRotation(angle));
+//
 //      p = Transform.translation(poseVector).multiply(Transform.zRotation(angle));
-
-      p = Transform.translation(poseVector).multiply(Transform.zRotation(angle));
-
-
-      Log.e("myLog --- ","annotation = =11 = = " + annotation);
-      Log.e("myLog --- ","p = =11 = = " + p);
-
-      annotation.setTransform(p);
-      annotation.setSizeXY((float) dist);
-
-
-    }
-
-
-    annotationLayer.addAnno(annotation);
-
-
+//
+//
+//      Log.e("myLog --- ","annotation = =11 = = " + annotation);
+//      Log.e("myLog --- ","p = =11 = = " + p);
+//
+//      annotation.setTransform(p);
+//      annotation.setSizeXY((float) dist);
+//
+//
+//    }
+//
+//
+//    annotationLayer.addAnno(annotation);
+//
+//
 
 
 
